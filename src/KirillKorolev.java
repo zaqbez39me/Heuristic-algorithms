@@ -34,7 +34,121 @@ class Coordinates {
     }
 }
 
+class Algorithm{
+    int[][] possibleMoves;
+    int minimum;
+    public ArrayList<ArrayList<GameMap.Node>> matrix;
+    private ArrayList<Coordinates> best_path;
+
+    public int getHeuristic(Coordinates from, Coordinates to){
+        return Math.max(Math.abs(to.x - from.x), Math.abs(to.y - from.y));
+    }
+
+    public boolean inBoundaries(Coordinates coordinates){
+        return 0 <= coordinates.x && coordinates.x <= 8 &&
+                0 <= coordinates.y && coordinates.y <= 8;
+    }
+
+    public ArrayList<Coordinates> getBestPath(){
+        return this.best_path;
+    }
+
+    Algorithm(ArrayList<ArrayList<GameMap.Node>> matrix){
+        possibleMoves = new int[][]{{1, 1}, {1, 0}, {0, 1}, {1, -1}, {-1, 1}, {0, -1}, {-1, 0}, {-1, -1}};
+        this.matrix = matrix;
+        minimum = Integer.MAX_VALUE;
+    }
+
+    public GameMap.Node getMatrixNode(Coordinates coordinates){
+        return matrix.get(coordinates.y).get(coordinates.x);
+    }
+
+    public void setBestPath(ArrayList<Coordinates> best_path) {
+        this.best_path = best_path;
+    }
+}
+
+class DFS extends Algorithm{
+    private boolean anyPathFound = false;
+    private final Coordinates tortugaCoordinates;
+    DFS(ArrayList<ArrayList<GameMap.Node>> matrix, Coordinates tortugaCoordinates) {
+        super(matrix);
+        this.tortugaCoordinates = tortugaCoordinates;
+    }
+
+    private boolean isAround(Coordinates coordinates, char t){
+        for(int i = 0; i < 8; ++i){
+            if(inBoundaries(new Coordinates(coordinates.y + possibleMoves[i][0], coordinates.x + possibleMoves[i][1]))) {
+                if (this.matrix.get(coordinates.y + possibleMoves[i][0]).get(coordinates.x + possibleMoves[i][1]).getId() == t)
+                    return true;
+            }
+        }
+        return false;
+    }
+
+    public void dfs(Coordinates start, GameMap.Node currentNode, int currentValue, Coordinates target, boolean haveRum, boolean krakenAlive){
+        if(currentValue + getHeuristic(currentNode.getCoordinates(), target) > this.minimum)
+            return;
+        if(currentNode.getCoordinates().y == target.y && currentNode.getCoordinates().x == target.x && minimum > currentValue){
+            anyPathFound = true;
+            minimum = currentValue;
+            GameMap.Node temp_node = currentNode;
+            ArrayList<Coordinates> temp_path = new ArrayList<>();
+            while(temp_node.getCoordinates().x != start.x || temp_node.getCoordinates().y != start.y){
+                temp_path.add(temp_node.getCoordinates());
+                temp_node = temp_node.getParent();
+            }
+            temp_path.add(temp_node.getCoordinates());
+            this.setBestPath(temp_path);
+            return;
+        }
+        currentNode.setVisited(true);
+        for(int i = 0; i < 8; ++i){
+            Coordinates coordinates = new Coordinates(currentNode.getCoordinates().y + possibleMoves[i][0],
+                    currentNode.getCoordinates().x + possibleMoves[i][1]);
+            if(inBoundaries(coordinates)) {
+                GameMap.Node nextNode = getMatrixNode(coordinates);
+                if (!nextNode.getVisited()) {
+                    if(nextNode.howDanger() == 0) {
+                        nextNode.setParent(currentNode);
+                        dfs(start, nextNode, currentValue + 1, target, haveRum, krakenAlive);
+                    } else if ((!krakenAlive || isAround(currentNode.getCoordinates(), 'K')) && haveRum && nextNode.howDanger() == 1){
+                        nextNode.setParent(currentNode);
+                        dfs(start, nextNode, currentValue + 1, target, true, false);
+                    } else if(!krakenAlive && isAround(nextNode.getCoordinates(), 'K') && nextNode.howDanger() == 1){
+                        nextNode.setParent(currentNode);
+                        dfs(start, nextNode, currentValue + 1, target, true, false);
+                    }
+                }
+            }
+        }
+        if(anyPathFound)
+            currentNode.setVisited(false);
+    }
+
+    public void execute(GameMap.Node currentNode, Coordinates target){
+        dfs(currentNode.getCoordinates(), currentNode, 0, target, false, true);
+        if(!this.anyPathFound) {
+            for(int i = 0; i < 9; ++i)
+                for(int j = 0; j < 9; ++j)
+                    matrix.get(i).get(j).setVisited(false);
+            this.anyPathFound = true;
+            dfs(currentNode.getCoordinates(), currentNode, 0, tortugaCoordinates, false, true);
+            if(this.getBestPath() != null) {
+                ArrayList<Coordinates> wayToTortuga = (ArrayList<Coordinates>) this.getBestPath().clone();
+                int temp = this.minimum;
+                this.minimum = Integer.MAX_VALUE;
+                this.anyPathFound = false;
+                dfs(tortugaCoordinates, this.matrix.get(tortugaCoordinates.y).get(tortugaCoordinates.x), temp, target, true, true);
+                wayToTortuga.addAll(this.getBestPath());
+                this.setBestPath(wayToTortuga);
+            }
+        }
+    }
+}
+
 class GameMap{
+
     private List<Map_Object> map_objects = new ArrayList<>(6);
     private Jack_Sparrow jack_sparrow;
     private Davy_Jones davy_jones;
@@ -42,7 +156,64 @@ class GameMap{
     private Rock rock;
     private DeadMansChest deadMansChest;
     private Tortuga tortuga;
-    private ArrayList<ArrayList<Character>> matrix;
+
+    private ArrayList<ArrayList<Node>> matrix;
+
+    public static class Node{
+        private char id;
+        private short danger = 0;
+        private boolean visited = false;
+        private Node parent;
+        private final Coordinates coordinates;
+        private int current_value;
+
+        public Node(short danger, Coordinates coordinates, char id) {
+            this.danger = danger;
+            this.coordinates = coordinates;
+            this.id = id;
+        }
+
+        public void increaseDanger() {
+            this.danger++;
+        }
+
+
+        public void setCurrent_value(int current_value) {
+            this.current_value = current_value;
+        }
+
+        public int getCurrent_value() {
+            return current_value;
+        }
+
+        public char getId() {
+            return id;
+        }
+
+        public void setParent(Node parent) {
+            this.parent = parent;
+        }
+
+        public Node getParent() {
+            return parent;
+        }
+
+        public Coordinates getCoordinates() {
+            return coordinates;
+        }
+
+        public void setVisited(boolean visited) {
+            this.visited = visited;
+        }
+
+        public boolean getVisited(){
+            return this.visited;
+        }
+
+        public short howDanger(){
+            return this.danger;
+        }
+    }
 
     public GameMap() {
 
@@ -54,23 +225,8 @@ class GameMap{
                 this.map_objects = new ArrayList<>(6);
                 return false;
             }
-        this.form_matrix();
+        make_matrix();
         return true;
-    }
-
-    private void form_matrix(){
-        this.matrix = new ArrayList<>(81);
-        for(int i = 0; i < 9; ++i){
-            matrix.add(new ArrayList<>());
-            for(int j = 0; j < 9; ++j)
-                matrix.get(i).add('_');
-        }
-        for(Map_Object map_object: this.map_objects) {
-            matrix.get(map_object.getCoordinates().y).set(map_object.getCoordinates().x, map_object.get_id());
-            for(Coordinates perception: map_object.get_perception_zone())
-                if(matrix.get(perception.y).get(perception.x) == '_')
-                    matrix.get(perception.y).set(perception.x, '*');
-        }
     }
 
     public boolean try_any_insertion_starting(Map_Object map_object, int x_begin, int y_begin){
@@ -101,14 +257,52 @@ class GameMap{
             if(!try_any_insertion_starting(map_object, j, i))
                 return false;
         }
-        this.form_matrix();
+        make_matrix();
         return true;
     }
 
+    public void make_matrix(){
+        matrix = new ArrayList<>(81);
+        for(int i = 0; i < 9; ++i) {
+            matrix.add(new ArrayList<>());
+            for(int j = 0; j < 9; ++j)
+                matrix.get(i).add(null);
+        }
+        for(Map_Object map_object: this.map_objects) {
+            matrix.get(map_object.getCoordinates().y).set(map_object.getCoordinates().x, new Node((short) (map_object.enemy ? 1 : 0), map_object.getCoordinates(), map_object.get_id()));
+            for(Coordinates perception: map_object.get_perception_zone())
+                if(matrix.get(perception.y).get(perception.x) == null)
+                    matrix.get(perception.y).set(perception.x, new Node((short) 1,  perception, '*'));
+                else
+                    matrix.get(perception.y).get(perception.x).increaseDanger();
+        }
+        for(int i = 0; i < 9; ++i) {
+            for(int j = 0; j < 9; ++j)
+                if(this.matrix.get(i).get(j) == null)
+                    matrix.get(i).set(j, new Node((short) 0, new Coordinates(i, j), '_'));
+        }
+    }
+
+    public ArrayList<ArrayList<Node>> getMatrix() {
+        return matrix;
+    }
+
     public void print_map(){
+        ArrayList<ArrayList<Character>> matrix = new ArrayList<>(81);
+        for(int i = 0; i < 9; ++i){
+            matrix.add(new ArrayList<>());
+            for(int j = 0; j < 9; ++j)
+                matrix.get(i).add('_');
+        }
+        for(Map_Object map_object: this.map_objects) {
+            matrix.get(map_object.getCoordinates().y).set(map_object.getCoordinates().x, map_object.get_id());
+            for(Coordinates perception: map_object.get_perception_zone())
+                if(matrix.get(perception.y).get(perception.x) == '_')
+                    matrix.get(perception.y).set(perception.x, '*');
+        }
         for(int i = 0; i < 9; ++i){
             for(int j = 0; j < 9; ++j){
-                System.out.print(this.matrix.get(i).get(j));
+                System.out.printf("%c ", matrix.get(i).get(j));
             }
             System.out.println();
         }
@@ -172,6 +366,7 @@ class GameMap{
 }
 
 class Map_Object{
+    public boolean enemy = false;
     private final GameMap map;
     private Coordinates coordinates;
 
@@ -221,8 +416,8 @@ class Jack_Sparrow extends Map_Object{
     public Jack_Sparrow(GameMap map){
         super(map);
     }
-    public Jack_Sparrow(int x, int y, GameMap map) {
-        super(x, y, map);
+    public Jack_Sparrow(int y, int x, GameMap map) {
+        super(y, x, map);
     }
 
     @Override
@@ -245,8 +440,9 @@ class Davy_Jones extends Map_Object{
         super(map);
     }
 
-    public Davy_Jones(int x, int y, GameMap map) {
-        super(x, y, map);
+    public Davy_Jones(int y, int x, GameMap map) {
+        super(y, x, map);
+        enemy = true;
     }
 
     @Override
@@ -291,8 +487,9 @@ class Kraken extends Map_Object{
     public Kraken(GameMap map){
         super(map);
     }
-    public Kraken(int x, int y, GameMap map) {
-        super(x, y, map);
+    public Kraken(int y, int x, GameMap map) {
+        super(y, x, map);
+        enemy = true;
     }
 
     @Override
@@ -337,8 +534,9 @@ class Rock extends Map_Object{
     public Rock(GameMap map){
         super(map);
     }
-    public Rock(int x, int y, GameMap map) {
-        super(x, y, map);
+    public Rock(int y, int x, GameMap map) {
+        super(y, x, map);
+        enemy = true;
     }
 
     @Override
@@ -420,13 +618,13 @@ public class KirillKorolev {
                 "1) From file \"input.txt\"\n" +
                 "2) From console\n" +
                 "3) Generate randomly");
+        long time = 0;
         switch (scanner.nextInt()){
             case 1:
                 scanner = new Scanner(new FileReader("input.txt"));
             case 2:
                 while (true) {
-                    scanner.nextLine();
-                    String temp = scanner.nextLine().replace("[", "").replace("]",
+                    String temp = (scanner.next() + scanner.nextLine()).replace("[", "").replace("]",
                             "").replace(",", " ");
                     line = new Scanner(temp);
                     Jack_Sparrow jack_sparrow = new Jack_Sparrow(line.nextInt(), line.nextInt(), gameMap);
@@ -443,12 +641,27 @@ public class KirillKorolev {
                 break;
             case 3:
                 Random random = new Random();
-                long start = System.currentTimeMillis();
-                for(int i = 0; i < 1000; ++i)
+                long start = System.nanoTime();
+                for(int i = 0; i < 1000; ++i) {
+                    gameMap = new GameMap();
                     gameMap.generate(random);
-                System.out.println(System.currentTimeMillis() - start);
+                    DFS dfs = new DFS(gameMap.getMatrix(), gameMap.getTortuga().getCoordinates());
+                    long startT = System.nanoTime();
+                    dfs.execute(gameMap.getMatrix().get(0).get(0), gameMap.getDeadMansChest().getCoordinates());
+                    time += System.nanoTime() - startT;
+                }
+                System.out.println(time / 1000/ 1000000.0);
         }
         gameMap.print_map();
+        DFS dfs = new DFS(gameMap.getMatrix(), gameMap.getTortuga().getCoordinates());
+        dfs.execute(gameMap.getMatrix().get(0).get(0), gameMap.getDeadMansChest().getCoordinates());
+        if (dfs.getBestPath() == null)
+            System.out.println("No path!");
+        else{
+            System.out.println(dfs.minimum);
+            for(int i = 0; i < dfs.getBestPath().size(); ++i)
+                System.out.printf("%d %d\n", dfs.getBestPath().get(i).y, dfs.getBestPath().get(i).x);
+        }
     }
 
     public static void main(String[] args) throws FileNotFoundException {
