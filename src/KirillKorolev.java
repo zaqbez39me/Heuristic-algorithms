@@ -5,8 +5,31 @@ import java.io.PrintStream;
 import java.util.*;
 
 
+/**
+ * <h1>Main class</h1>
+ * The main class that contains driver code for algorithms. It contains three main methods:
+ * <br/>
+ * 1) <strong>Main</strong>({@code main}), which simply calls dialog method with all user interactive functions.
+ * <br/>
+ * 2) <strong>Dialog</strong>({@code dialog}), which used to interact with user. It also changes some values and calls for some functions,
+ * correspondingly with user choices.
+ * <br/>
+ * 3) <strong>Get result</strong>({@code getResult}), which executes one of two algorithms using the given {@code SpyGlass} and saves
+ * the results of execution to output files.
+ */
 public class KirillKorolev {
 
+
+    /**
+     * <h3>Method to execute one of two algorithms</h3>
+     * This is the method that executes specific algorithm basing on given parameters and saves the results in provided
+     * to us format in file.
+     * @param file Parameter of file where to save the result.
+     * @param gameMap Given map for algorithm execution.
+     * @param spyGlass Spyglass object that is being used by actor for exploration.
+     * @param backtracking Flag for an algorithm to check which algorithm should be executed (A* or backtracking).
+     * @throws IOException Exception that can be thrown because of absence of file or other problems with file.
+     */
     public static void getResult(File file, GameMap gameMap, SpyGlass spyGlass, boolean backtracking) throws IOException {
         Actor actor = new Actor(gameMap, gameMap.getJackSparrow().getCoordinates(), spyGlass);
         Algorithm algorithm;
@@ -34,6 +57,12 @@ public class KirillKorolev {
         }
     }
 
+
+    /**
+     * <h3>Dialog method</h3>
+     * Provides a dialog with user to choose what user wants to execute and then executes proper algorithms.
+     * @throws IOException Exception that can be thrown because of absence of file or other problems with file.
+     */
     private static void dialog() throws IOException {
         Scanner scanner = new Scanner(System.in);
         GameMap gameMap = new GameMap();
@@ -100,7 +129,7 @@ public class KirillKorolev {
         int spyGlassType = -1;
         do {
             try {
-                System.out.println("Enter spy glass type id(1 - SpyGlass, 2 - SuperSpyGlass):");
+                System.out.println("Enter spyglass type id(1 - SpyGlass, 2 - SuperSpyGlass):");
                 spyGlassType = scanner.nextInt();
                 switch (spyGlassType) {
                     case 1 -> spyGlass = new UsualSpyGlass(gameMap.getMatrix());
@@ -121,11 +150,21 @@ public class KirillKorolev {
         getResult(fileBacktracking, gameMap, spyGlass, true);
     }
 
+
+    /**
+     * <h3>Main method</h3>
+     * @param args Parameters for execution
+     * @throws IOException Exception that can be thrown because of absence of file or other problems with file.
+     */
     public static void main(String[] args) throws IOException {
         dialog();
     }
 }
 
+/**
+ * <h2>Enumeration with main objects on map</h2>
+ * This is an enumeration that contains all possible values of map objects.
+ */
 enum ObjectValues  {
 
     JACK_SPARROW('J'),
@@ -147,6 +186,11 @@ enum ObjectValues  {
     }
 }
 
+
+/**
+ * <h2>Enumeration of all algorithms</h2>
+ * This is an enumeration that contains all possible all algorithms that mey be executed.
+ */
 enum AlgorithmValues{
     A_STAR,
     A_STAR_SUPER,
@@ -154,44 +198,107 @@ enum AlgorithmValues{
     BACKTRACKING_SUPER
 }
 
+
+/**
+ * <h2>Coordinates class</h2>
+ * The main class that contains the coordinates. This class provides an easy way to work with coordinates. It provides
+ * an ability to get coordinates, set coordinates and get the value from some matrix stored in cells with corresponding
+ * indexes.
+ */
 class Coordinates {
     public int y, x;
 
+
+    /**
+     * <h3>Basic coordinates constructor</h3>
+     * @param y coordinate on Y-axis
+     * @param x coordinate on X-axis
+     */
     public Coordinates(int y, int x){
         this.x = x;
         this.y = y;
     }
+
+
+    /**
+     * <h3>Method to check if coordinates equal</h3>
+     * @param coordinates Coordinates instanse
+     * @return {@code boolean} reuslt of check
+     */
     public boolean equals(Coordinates coordinates) {
         return this.x == coordinates.x && this.y == coordinates.y;
     }
 
+
+    /**
+     * <h3>Update the coordinates with new X and Y coordiantes</h3>
+     * @param y coordinate on Y-axis
+     * @param x coordinate on X-axis
+     */
     public void setCoordinates(int y, int x){
         this.x = x;
         this.y = y;
     }
 
+
+    /**
+     * <h3>Get an element of matrix by coordinates</h3>
+     * @param list given matrix
+     * @return {@code GameMap.Node} as result
+     */
     public GameMap.Node getByCoordinates(List<List<GameMap.Node>> list){
         return list.get(y).get(x);
     }
 
+
+    /**
+     * Set element in matix by coordinates
+     * @param list given matrix
+     * @param node given {@code GameMap.Node} to set
+     */
     public void setByCoordinates(List<List<GameMap.Node>> list, GameMap.Node node){
         list.get(y).set(x, node);
     }
 
+
+    /**
+     * <h3>Get an element from boolean matrix by coordinates</h3>
+     * @param matrix given boolean matrix
+     * @return {@code boolean} element from matrix
+     */
     public boolean getByCoordinates(boolean [][] matrix){
         return matrix[y][x];
     }
 
+
+    /**
+     * Set value in boolean matrix by coordinates
+     * @param matrix given boolean matrix
+     * @param value given {@code boolean} value to set with
+     */
     public void setByCoordinates(boolean [][] matrix, boolean value){
         matrix[y][x] = value;
     }
 
+
+    /**
+     * <h3>Getsum of two coordinates with new {@code Coordinates} instance</h3>
+     * @param y given Y-axis coordinate
+     * @param x given X-axis coordinate
+     * @return new {@code Coordinate} instance result of addition
+     */
     public Coordinates getSum(int y, int x){
         return new Coordinates(this.y + y, this.x + x);
     }
 
 }
 
+
+/**
+ * <h2>Algorithm class</h2>
+ * This is the parent class for all algorithms. Provides methods that are being used by both
+ * algorithms. Contains all the variables that are being used by algorithms.
+ */
 abstract class Algorithm{
     int[][] possibleMoves, krakenPerception, krakenSafe;
     int minimum;
@@ -201,20 +308,43 @@ abstract class Algorithm{
     public boolean anyPathFound = false;
 
 
+    /**
+     * <h3>Get heuristic distance between two points</h3>
+     * Calculate the task specific heuristic distance between two points
+     * @param from first point {@code Coordinates}
+     * @param to second point {@code Coordinates}
+     * @return heuristic distance {@code int} value
+     */
     public int getHeuristic(Coordinates from, Coordinates to){
         return Math.max(Math.abs(to.x - from.x), Math.abs(to.y - from.y));
     }
 
+
+    /**
+     * <h3>Check if coordinates in map boundaries</h3>
+     * @param coordinates given {@code Coordinates}
+     * @return {@code boolean} result flag
+     */
     public static boolean inBoundaries(Coordinates coordinates){
         return 0 <= coordinates.x && coordinates.x <= 8 &&
                 0 <= coordinates.y && coordinates.y <= 8;
     }
 
+
+    /**
+     * <h3>Getter for {@code best_path}</h3>
+     * @return {@code LinkedList<Coordinates>} value of {@code best_path}
+     */
     public LinkedList<Coordinates> getBestPath(){
         return this.best_path;
     }
 
-    Algorithm(Actor actor){
+
+    /**
+     * <h3>Constructor for an algorithm instance</h3>
+     * @param actor given {@code Actor} that used in algorithm execution
+     */
+    public Algorithm(Actor actor){
         this.actor = actor;
         possibleMoves = new int[][]{{1, 1}, {1, 0}, {0, 1}, {1, -1}, {-1, 1}, {0, -1}, {-1, 0}, {-1, -1}};
         krakenPerception = new int[][]{{1, 0}, {0, 1}, {0, -1}, {-1, 0}};
@@ -222,6 +352,13 @@ abstract class Algorithm{
         minimum = Integer.MAX_VALUE;
     }
 
+
+    /**
+     * <h3>Method to save the path by getting parent of current node</h3>
+     * @param start given {@code Coordinates} value of start node
+     * @param target given {@code Coordinates} value of of last node in the path
+     * @return result list of coordinates in path
+     */
     public LinkedList<Coordinates> getPath(Coordinates start, Coordinates target){
         GameMap.Node tempNode = target.getByCoordinates(actor.getMapInMemory());
         LinkedList<Coordinates> result = new LinkedList<>();
@@ -236,14 +373,30 @@ abstract class Algorithm{
         return result;
     }
 
+
+    /**
+     * <h3>Get {@code GameMap.Node} from map in memory by coordinates</h3>
+     * @param coordinates given {@code Coordinates} to get value from
+     * @return {@code GameMap.Node} result
+     */
     public GameMap.Node getMatrixNode(Coordinates coordinates){
         return coordinates.getByCoordinates(this.actor.getMapInMemory());
     }
 
+    /**
+     * <h3>Best path value setter</h3>
+     * @param best_path given new <code>LinkedList<Coordiantes></code> value}
+     */
     public void setBestPath(LinkedList<Coordinates> best_path) {
         this.best_path = best_path;
     }
 
+    /**
+     * <h3>Check if kraken placed on sum of given coordinates with displacement</h3>
+     * @param coordinates given {@code Coordinates} in matrix
+     * @param array specific array of displacements for check
+     * @return {@code boolean} result of check for Kraken on given area
+     */
     boolean checkForKrakenOnArray(Coordinates coordinates, int[][] array){
         for (int[] cell : array) {
             Coordinates sum = coordinates.getSum(cell[0], cell[1]);
@@ -257,10 +410,23 @@ abstract class Algorithm{
         }
         return false;
     }
+
+
+    /**
+     * <h3>Method to check whether these coordinates are placed on diagonal from kraken</h3>
+     * @param coordinates given {@code Coordinates} to check
+     * @return {@code boolean} result of check
+     */
     boolean isKrakenSafe(Coordinates coordinates){
         return checkForKrakenOnArray(coordinates, this.krakenSafe);
     }
 
+
+    /**
+     * <h3>Check whether this coordinates are in Kraken perception zone</h3>
+     * @param coordinates given {@code Coordinates} for check
+     * @return {@code boolean} flag result of check
+     */
     boolean isKrakenPerception(Coordinates coordinates){
         if(checkForKrakenOnArray(coordinates, this.krakenPerception))
             return true;
@@ -270,30 +436,37 @@ abstract class Algorithm{
     }
 
 
-
-    void clearForAStar(boolean haveRum){
-        for (int i = 0; i < 9; ++i) {
-            for (int j = 0; j < 9; ++j) {
-                GameMap.Node node = new Coordinates(i, j).getByCoordinates(actor.getMapInMemory());
-                if (node != null) {
-                    node.krakenAlive = true;
-                    node.haveRum = haveRum;
-                    node.setParent(null);
-                    node.setCurrentG(Integer.MAX_VALUE);
-                    node.setCurrentF(Integer.MAX_VALUE);
-                }
-            }
-        }
-    }
-
+    /**
+     * <h3>Abstract method of algorithm execution</h3>
+     * @param currentNode given {@code GameMap.Node}
+     * @param target given {@code Coordinates} target to reach
+     * @return {@code LinkedList} path result
+     */
     abstract LinkedList<Coordinates> execute(GameMap.Node currentNode, Coordinates target);
 }
 
+
+/**
+ * <h2>A* class</h2>
+ * The class for A* algorithm. It has derived constructor and can be executed by overridden method {@code execute}.
+ * Has specific methods that are used only for this algorithm ({@code aStar} and {@code clear}).
+ */
 class AStar extends Algorithm{
     AStar(Actor actor) {
         super(actor);
     }
 
+
+    /**
+     * <h3>AStar main method to find the shortest path between to point</h3>
+     * This is the implementation of A* algorithm that checks that the next Node safe or preforms additional checks. The
+     * main idea of implementation to insert each suitable point to the open set and extract the minimal from it and put
+     * it in the closed set. Then we visit all its children which are not in the closed set. This is task specific
+     * version of an algorithm that also provides an ability for an actor to get rum from tortuga and kill Kraken from
+     * diagonal cells and then walk through it because it is disabled.
+     * @param currentNode start {@code GameMap.Node} for the algorithm
+     * @param target {@code Coordinates} of target to reach
+     */
     public void aStar(GameMap.Node currentNode, Coordinates target){
         boolean [][]closed = new boolean[9][9];
         currentNode.setCurrentG(0);
@@ -354,6 +527,16 @@ class AStar extends Algorithm{
         }
     }
 
+
+    /**
+     * <h3>AStar execution algorithm</h3>
+     * This is a driver code part for the AStar algorithm it find ways both through Tortuga and without it and then
+     * chooses the best one from them if any of them exists.
+     * @param currentNode given {@code GameMap.Node}
+     * @param target      given {@code Coordinates} target to reach
+     * @return {@code LinkedList} resul path
+     */
+    @Override
     public LinkedList<Coordinates> execute(GameMap.Node currentNode, Coordinates target){
         if(currentNode.howDanger() == 0) {
             boolean tortugaOnStart = currentNode.getId() == ObjectValues.TORTUGA.value;
@@ -372,16 +555,14 @@ class AStar extends Algorithm{
                 withoutTortugaAlive = target.getByCoordinates(actor.getMapInMemory()).krakenAlive;
             LinkedList<Coordinates> withoutTortuga = null;
             LinkedList<Coordinates> toTortuga = null;
-            if (anyPathFound)
-                withoutTortuga = getPath(currentNode.getCoordinates(), target);
-            clearForAStar(true);
+            if (anyPathFound) withoutTortuga = getPath(currentNode.getCoordinates(), target);
+            clear(true);
             this.anyPathFound = false;
             aStar(actor.findTortuga().getByCoordinates(actor.getMapInMemory()), target);
             LinkedList<Coordinates> fromTortuga = null;
-            if(anyPathFound)
-                fromTortuga = getPath(actor.findTortuga(), target);
+            if(anyPathFound) fromTortuga = getPath(actor.findTortuga(), target);
             if (target.getByCoordinates(actor.getMapInMemory()) != null && anyPathFound) {
-                clearForAStar(false);
+                clear(false);
                 this.anyPathFound = false;
                 aStar(currentNode, actor.findTortuga());
                 if(this.anyPathFound) {
@@ -419,17 +600,64 @@ class AStar extends Algorithm{
             return new LinkedList<>();
         }
     }
+
+
+    /**
+     * <h3>Clear all the variable that should be emptied for next execution of AStar</h3>
+     * @param haveRum which value of {@code haveRum} to set for all cells
+     */
+    void clear(boolean haveRum){
+        for (int i = 0; i < 9; ++i) {
+            for (int j = 0; j < 9; ++j) {
+                GameMap.Node node = new Coordinates(i, j).getByCoordinates(actor.getMapInMemory());
+                if (node != null) {
+                    node.krakenAlive = true;
+                    node.haveRum = haveRum;
+                    node.setParent(null);
+                    node.setCurrentG(Integer.MAX_VALUE);
+                    node.setCurrentF(Integer.MAX_VALUE);
+                }
+            }
+        }
+    }
 }
 
+
+/**
+ * <h2>Backtracking class</h2></h2>
+ * The class for Backtracking algorithm, which is based on DFS algorithm. It has derived constructor and can be executed
+ * by overridden method {@code execute}. Has specific methods that are used only for this algorithm:
+ * <br/>
+ * 1) <strong>Backtracking</strong>({@code backtracking}), which is recursive method that delivers main functionality.
+ * <br/>
+ * 2) <strong>Clear visited cells</strong>({@code clearVisited}), which sets all the visited flags to false. It is
+ * meaningful because recursive {@code backtracking} is called several time, so it shouldn't know anything about
+ * previous execution.
+ * <br/>
+ * 3) <strong>Visit current coordinates</strong>({@code visitedCoordinates}), which is used for visiting the cell and
+ * checking all of the conditions.
+ *<br/>
+ * 4) <strong>Check existence of path to the given target</strong>({@code pathExists}), which check whether we can find
+ * path to the target from the start point or not.
+ */
 class Backtracking extends Algorithm{
 
     short[][] best_values = new short[9][9];
 
-    Backtracking(Actor actor) {
+
+    /**
+     * <h3>Constructor for a backtracking algorithm instance</h3>
+     * @param actor given {@code Actor} for an algorithm execution
+     */
+    public Backtracking(Actor actor) {
         super(actor);
         for (short[] best_value : best_values) Arrays.fill(best_value, Short.MAX_VALUE);
     }
 
+
+    /**
+     * <h3>Clear all visited cells for future executions</h3>
+     */
     private void clearVisited(){
         for (int i = 0; i < 9; ++i) {
             for (int j = 0; j < 9; ++j) {
@@ -441,6 +669,19 @@ class Backtracking extends Algorithm{
         }
     }
 
+
+    /**
+     * <h3>Method to visit given coordinates and perform all the checks</h3>
+     * This methods visits cells, performs checks for kraken and safety, and after checks executes backtracking
+     * with specific arguments.
+     * @param start {@code Coordinates} of start
+     * @param coordinates {@code Coordinates} to visit
+     * @param target {@code Coordinates} of target to reach
+     * @param currentValue {@code int} length of current path
+     * @param currentNode current {@code GameMap.Node} for execution
+     * @param haveRum haveRum {@code boolean} flag for this branch
+     * @param krakenAlive krakenAlive {@code boolean} flag for this branch
+     */
     void visitCoordinates(Coordinates start, Coordinates coordinates, Coordinates target, int currentValue,
                           GameMap.Node currentNode, boolean haveRum, boolean krakenAlive){
         if(inBoundaries(coordinates)) {
@@ -469,6 +710,16 @@ class Backtracking extends Algorithm{
         }
     }
 
+
+    /**
+     * <h3>Check whether path exists or not</h3>
+     * @param start start of algorithm {@code Coordinates}
+     * @param currentNode {@code GameMap.Node} on current step of execution
+     * @param currentValue current {@code int} length of path
+     * @param target {@code Coordinates} of target that we need to reach
+     * @param haveRum {@code boolean} flag to check whether this branch has rum or not
+     * @param krakenAlive {@code boolean} flag to check whether the Kraken killed in this branch or not
+     */
     public void pathExists(Coordinates start, GameMap.Node currentNode, int currentValue, Coordinates target, boolean haveRum, boolean krakenAlive){
         actor.setCoordinates(currentNode.getCoordinates());
         actor.explore();
@@ -486,7 +737,9 @@ class Backtracking extends Algorithm{
                 actor.setCoordinates(coordinates);
                 actor.explore();
                 GameMap.Node nextNode = getMatrixNode(coordinates);
+                //If node is not visited we can visit it
                 if (nextNode.notVisited()) {
+                    //If this node is fully safe we can just visit it
                     if(nextNode.howDanger() == 0) {
                         nextNode.setParent(currentNode);
                         if(nextNode.getId() == ObjectValues.TORTUGA.value) {
@@ -496,8 +749,13 @@ class Backtracking extends Algorithm{
                         else
                             pathExists(start, nextNode, currentValue + 1, target,
                                         haveRum, krakenAlive);
-                    } else if ((!krakenAlive || isKrakenSafe(currentNode.getCoordinates()) && haveRum)
-                            && nextNode.howDanger() == 1 && isKrakenPerception(nextNode.getCoordinates())) {
+
+                    }
+                    //If this node is not safe but level of danger is one we can perform additional checks
+                    //to maybe visit this cell if it is cell of Kraken and Kraken is dead for now
+                    else if (nextNode.howDanger() == 1 &&
+                            (!krakenAlive || isKrakenSafe(currentNode.getCoordinates()) && haveRum)
+                             && isKrakenPerception(nextNode.getCoordinates())) {
                         nextNode.setParent(currentNode);
                         pathExists(start, nextNode, currentValue + 1, target, true, false);
                     }
@@ -506,6 +764,16 @@ class Backtracking extends Algorithm{
         }
     }
 
+
+    /**
+     * <h3>Recursive part of the backtracking algorithm</h3>
+     * @param start given {@code Coordinates} of path start point
+     * @param currentNode {@code GameMap.Node} value on current step of recursive algorithm execution
+     * @param currentValue length {@code int} value of length on current step of execution
+     * @param target {@code Coordinates} of the target to get the shortest path to
+     * @param haveRum {@code boolean} flag that says whether actor has the rum on this branch or not.
+     * @param krakenAlive {@code boolean} flag that say whether actor killed Kraken on this branch or not
+     */
     public void backtracking(Coordinates start, GameMap.Node currentNode, int currentValue, Coordinates target, boolean haveRum, boolean krakenAlive){
         actor.setCoordinates(currentNode.getCoordinates());
         actor.explore();
@@ -525,6 +793,7 @@ class Backtracking extends Algorithm{
             return;
         }
         currentNode.setVisited(true);
+        //Visit all cells around the current node with additional checks
         for (int[] possibleMove : this.possibleMoves) {
             Coordinates coordinates = currentNode.getCoordinates().getSum(possibleMove[0], possibleMove[1]);
             visitCoordinates(start, coordinates, target, currentValue, currentNode, haveRum, krakenAlive);
@@ -532,6 +801,13 @@ class Backtracking extends Algorithm{
         currentNode.setVisited(false);
     }
 
+
+    /**
+     * <h3>Driver code for the algorithm execution</h3>
+     * @param currentNode given {@code GameMap.Node}
+     * @param target      given {@code Coordinates} target to reach
+     * @return {@code LinkedLsit} shortest path or list of zero length
+     */
     public LinkedList<Coordinates> execute(GameMap.Node currentNode, Coordinates target){
         if(currentNode.howDanger() == 0) {
             boolean tortugaOnStart = currentNode.getId() == ObjectValues.TORTUGA.value;
@@ -539,6 +815,7 @@ class Backtracking extends Algorithm{
             if (!tortugaOnStart){
                 pathExists(currentNode.getCoordinates(), currentNode, 0, actor.findTortuga(), false, true);
                 clearVisited();
+                //if path to tortuga found execute following
                 if (this.anyPathFound) {
                     this.minimum = Integer.MAX_VALUE;
                     backtracking(currentNode.getCoordinates(), currentNode, 0, actor.findTortuga(), false, true);
@@ -551,6 +828,7 @@ class Backtracking extends Algorithm{
                     this.anyPathFound = false;
                     pathExists(actor.findTortuga(), actor.findTortuga().getByCoordinates(actor.getMapInMemory()),
                             temp, target, true, true);
+                    //if path from tortuga to target exists save the full path in a list
                     if (this.anyPathFound) {
                         clearVisited();
                         this.minimum = Integer.MAX_VALUE;
@@ -571,6 +849,7 @@ class Backtracking extends Algorithm{
                 this.minimum = Integer.MAX_VALUE;
                 backtracking(currentNode.getCoordinates(), currentNode, 0, target, tortugaOnStart, true);
             }
+            //compare the paths and return the best if any exists
             if(throughTortuga != null) {
                 if(getBestPath() != null) {
                     if (getBestPath().size() < throughTortuga.size())
@@ -588,6 +867,12 @@ class Backtracking extends Algorithm{
     }
 }
 
+
+/**
+ * <h2>The main class that generates map or initializes it</h2>
+ * This is the class that consists of all the methods for map generation initialization on clearing(to get initial
+ * form). It is used to store all the data about map validate map, and used in some other classes to get data from.
+ */
 class GameMap{
 
     private List<MapObject> map_objects = new ArrayList<>(6);
@@ -600,6 +885,10 @@ class GameMap{
 
     private List<List<Node>> matrix;
 
+
+    /**
+     * <h3>Map node that contains different parameters that are used in algorithms</h3>
+     */
     public static class Node{
         private char id;
         private short danger;
@@ -679,6 +968,17 @@ class GameMap{
 
     }
 
+
+    /**
+     * <h3>Method to initialize map from given data</h3>
+     * @param jack_sparrow jack sparrow instance
+     * @param davy_jones davy jones instance
+     * @param kraken kraken instance
+     * @param rock rock instance
+     * @param deadMansChest dead mans chest instance
+     * @param tortuga tortuga instance
+     * @return {@code boolean} flag of success of the map initialization
+     */
     public boolean initialize(JackSparrow jack_sparrow, DavyJones davy_jones, Kraken kraken, Rock rock, DeadMansChest deadMansChest, Tortuga tortuga){
         for (MapObject map_object: Arrays.asList(jack_sparrow, davy_jones, kraken, rock, deadMansChest, tortuga))
             if(!checkedInsert(map_object)){
@@ -689,6 +989,14 @@ class GameMap{
         return true;
     }
 
+
+    /**
+     * <h3>Method of trying of insertion to the matrix starting from given coordinates</h3>
+     * @param map_object map object to insert
+     * @param x_begin start X-axis coordinates
+     * @param y_begin start Y-axis coordinates
+     * @return {@code boolean} flag of check whether the insertion possible
+     */
     public boolean tryAnyInsertionStarting(MapObject map_object, int x_begin, int y_begin){
         for(; y_begin < 9; ++y_begin){
             for (; x_begin < 9; ++x_begin){
@@ -705,6 +1013,11 @@ class GameMap{
         return false;
     }
 
+
+    /**
+     * <h3>Random map generation method</h3>
+     * @param generator Random generator
+     */
     public void generate(Random generator){
         if(!checkedInsert(new JackSparrow(0, 0, this)))
             return;
@@ -720,6 +1033,10 @@ class GameMap{
         makeMatrix();
     }
 
+
+    /**
+     * Method to remove kraken from the map
+     */
     public void killKraken(){
         int[][] krakenZone = new int[][]{{1, 0}, {0, 1}, {0, -1}, {-1, 0}};
         Coordinates krakenCoordinates = this.getKraken().getCoordinates();
@@ -742,6 +1059,10 @@ class GameMap{
                 krakenCoordinates.getByCoordinates(this.matrix).setId(ObjectValues.SEA.value);
     }
 
+
+    /**
+     * Method to form matrix for future algorithms execution
+     */
     public void makeMatrix(){
         matrix = new ArrayList<>(81);
         for(int i = 0; i < 9; ++i) {
@@ -785,6 +1106,11 @@ class GameMap{
         return matrix;
     }
 
+    /**
+     * <h3>Map printer</h3>
+     * @param printStream Printer instance
+     * @param path Found path
+     */
     public void printMap(PrintStream printStream, List<Coordinates> path) {
         for(Coordinates coordinates: path)
             matrix.get(coordinates.y).get(coordinates.x).setId(ObjectValues.PATH.value);
@@ -809,6 +1135,11 @@ class GameMap{
         return false;
     }
 
+
+    /**
+     * <h3>Map insertion method</h3>
+     * @param new_map_object New object to insert
+     */
     private void insert(MapObject new_map_object){
         this.map_objects.add(new_map_object);
         if (new_map_object.get_id() == ObjectValues.JACK_SPARROW.value) {
@@ -852,6 +1183,10 @@ class GameMap{
 
 }
 
+
+/**
+ * <h2>Map object class that contains all the common values and methods for map objects</h2>
+ */
 class MapObject {
     public boolean enemy = false;
     private final GameMap map;
@@ -869,10 +1204,22 @@ class MapObject {
         return '_';
     }
 
+
+    /**
+     * <h2>Check if object inside of another one</h2>
+     * @param map_object another object
+     * @return result flag
+     */
     public boolean inside(MapObject map_object){
         return this.coordinates.equals(map_object.coordinates);
     }
 
+
+    /**
+     * <h2>Say whether another object is placed in its danger zone</h2>
+     * @param map_object given map object
+     * @return result flag
+     */
     public boolean in_danger_zone(MapObject map_object){
         return inside(map_object);
     }
@@ -889,14 +1236,25 @@ class MapObject {
         this.coordinates = coordinates;
     }
 
+
+    /**
+     * <h2>Mehod that returns perception zone specific for each object</h2>
+     * @return List
+     */
     public List<Coordinates> get_perception_zone(){
         return new ArrayList<>();
     }
 
+
+    /**
+     * <h2>Check if all objects on map are placed correctly for this one</h2>
+     * @return result flag
+     */
     public boolean validate() {
         return true;
     }
 }
+
 
 /**
  * <h2>Class of a Jack Sparrow</h2>
@@ -923,6 +1281,7 @@ class JackSparrow extends MapObject {
         return true;
     }
 }
+
 
 /**
  * <h2>Class of a Davy Jones</h2>
@@ -977,6 +1336,7 @@ class DavyJones extends MapObject {
     }
 }
 
+
 /**
  * <h2>Class of a Kraken</h2>
  * This the class of the Rock {@code MapObject} with its own position validator. It is used in
@@ -1028,6 +1388,7 @@ class Kraken extends MapObject {
     }
 }
 
+
 /**
  * <h2>Class of a Rock</h2>
  * This the class of the Rock {@code MapObject} with its own position validator. It is used in
@@ -1058,6 +1419,7 @@ class Rock extends MapObject {
         return true;
     }
 }
+
 
 /**
  * <h2>Class of a Tortuga</h2>
@@ -1095,6 +1457,7 @@ class DeadMansChest extends MapObject {
     }
 }
 
+
 /**
  * <h2>Class of a Tortuga</h2>
  * This the class of the Tortuga {@code MapObject} with its own position validator. It is used in
@@ -1127,13 +1490,16 @@ class Tortuga extends MapObject {
     }
 }
 
+
 /**
- * <h3>Enumeration of targets for Compass</h3>
+ * <h2>Enumeration of targets for Compass</h2>
+ * This is the enumeration that consists of all possible compass targets.
  */
 enum CompassTarget {
     TORTUGA,
     DEAD_MANS_CHEST
 }
+
 
 /**
  * <h2>Class of a compass</h2>
@@ -1219,6 +1585,13 @@ class Actor{
     }
 }
 
+
+/**
+ * <h2>Abstract class SpyGlass</h2>
+ * This the class that provides the logic of spyglass used by Jack Sparrow. Here can be found common methods for all
+ * spyglasses, common variables and etc. The main method for this class is explore that provides an ability to explore
+ * game map and save the results to given map.
+ */
 abstract class SpyGlass{
     List<List<GameMap.Node>> map;
     int[][] exploreArea;
@@ -1237,6 +1610,12 @@ abstract class SpyGlass{
     }
 }
 
+
+/**
+ * <h2>Usual spyglass class</h2>
+ * This the class for the usual spyglass. It has specific explore area in the constructor, so it's explore method
+ * works specifically. The explore area is smaller than the explore area of super spyglass.
+ */
 class UsualSpyGlass extends SpyGlass{
 
     public UsualSpyGlass(List<List<GameMap.Node>> map) {
@@ -1245,6 +1624,12 @@ class UsualSpyGlass extends SpyGlass{
     }
 }
 
+
+/**
+ * <h2>Super spyglass class</h2>
+ * This the class for the super spyglass. It has specific explore area in the constructor, so it's explore method
+ * works specifically.
+ */
 class SuperSpyGlass extends SpyGlass{
 
     public SuperSpyGlass(List<List<GameMap.Node>> map) {
@@ -1254,6 +1639,12 @@ class SuperSpyGlass extends SpyGlass{
     }
 }
 
+
+/**
+ * <h2>Statistical tests class</h2>
+ * This is the class for getting the information about statistical tests. The size of sample is provided in the
+ * constructor and the type of an algorithm is provided for execution method({@code execute}).
+ */
 class StatisticalTest{
     private final int numberOfTests;
     private final List<Long> times;
@@ -1283,6 +1674,11 @@ class StatisticalTest{
         return (double) mostPopularTime / 1_000_000.0;
     }
 
+
+    /**
+     * <h2>Method to calculate median</h2>
+     * @return median value
+     */
     public double findMedian(){
         if(this.numberOfTests % 2 == 0){
             return (times.get(this.numberOfTests / 2) + times.get(this.numberOfTests / 2 + 1)) / 2_000_000.0;
@@ -1291,6 +1687,12 @@ class StatisticalTest{
         }
     }
 
+
+    /**
+     * <h2>Method to calculate standard deviation</h2>
+     * @param mean mean value of sample
+     * @return standard deviation value
+     */
     public double getStandardDeviation(double mean){
         double result = 0;
         for (long time: times){
@@ -1299,6 +1701,11 @@ class StatisticalTest{
         return Math.sqrt(result / (this.numberOfTests - 1));
     }
 
+    /**
+     * <h2>Method to execute given number of tests and print results to given stream</h2>
+     * @param printStream given stram
+     * @param algorithmValue which algorithm to execute
+     */
     public void execute(PrintStream printStream, AlgorithmValues algorithmValue){
         Random random = new Random();
         GameMap gameMap;
@@ -1349,8 +1756,11 @@ class StatisticalTest{
                         \tStandard deviation: %f ms
                         \tNumber of wins: %d
                         \tNumber of loses: %d
+                        \tPercent of wins: %.2f%%
+                        \tPercent of loses: %.2f%%
                         """,
-                mean, mode, median, standardDeviation, numberOfWins, numberOfLoses);
+                mean, mode, median, standardDeviation, numberOfWins, numberOfLoses, numberOfWins /
+                        (double) this.numberOfTests * 100, numberOfLoses / (double) this.numberOfTests * 100);
     }
 }
 
@@ -1368,6 +1778,7 @@ interface IPriorityQueue<K extends Comparable<K>,V> {
     void delete(Node<K, V> item);
     void union(PriorityQueue<K, V> anotherQueue);
 }
+
 
 /**
  * <h1>DoublyLinkedCircularList for nodes class</h1>
@@ -1519,6 +1930,7 @@ class DoublyLinkedCircularList<K, V> implements Iterable<Node<K, V>>{
     }
 }
 
+
 /**
  * <h1>Node class</h1>
  * @param <K> - Key type template
@@ -1594,6 +2006,7 @@ class Node<K, V>{
         this.key = key;
     }
 }
+
 
 /**
  * <h1>Priority Queue class</h1>
